@@ -1,1 +1,83 @@
-<h2>Hello</h2>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Tone ios test</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #282c34;
+            overflow: hidden;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+        }
+
+        #sound {
+            height: 30px;
+            width: 100px;
+            border-radius: 4px;
+            border: 1px solid white;
+        }
+    </style>
+    <script src="./Tone.js"></script>
+</head>
+
+<body>
+    <div class="button-container">
+        <button id="sound">Play</button>
+    </div>
+    <script>
+        
+        const gain = new Tone.Gain(0.2);
+        let instrument = new Tone.Sampler({ "C4": './samples/sound.wav' }).chain(
+                gain,
+                Tone.Master
+            );
+
+        const steps = Array(8).fill({note: 'C4', velocity: 0.5});
+        
+        const scheduleStepActivation = (time, value) => {
+            instrument.triggerAttack(value.note, time, value.velocity);
+        };
+        
+        const stepsToTimedSteps = (steps) => {
+            const subdivision = `${steps.length}n`;
+            return steps.map((step, i) => {
+                const time = i === 0 ? 0 : { [subdivision]: i };
+                return { time, ...step };
+            });
+        }
+        
+        const tonePart = new Tone.Part(scheduleStepActivation, stepsToTimedSteps(steps));
+        tonePart.loop = true;
+        tonePart.start(0);
+        
+        let toneStarted = false;
+        const playButton = document.getElementById("sound");
+        playButton.addEventListener('click', async () => {
+            if (!toneStarted) {
+                await Tone.start()
+                Tone.Transport.start("+0");
+                playButton.innerText = 'Stop';
+                toneStarted = true;
+            } else {
+                Tone.Transport.stop();
+                playButton.innerText = 'Play';
+                toneStarted = false;
+            }
+        })
+    </script>
+</body>
+
+</html>
